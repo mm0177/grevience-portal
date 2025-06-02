@@ -1,4 +1,4 @@
-# Grievance Portal - Our Hearts
+# Grievance Portal - Our Heart
 
 A personal portal where feelings can be expressed through text and emojis, with entries saved to MongoDB.
 
