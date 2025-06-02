@@ -1,58 +1,85 @@
-import { users, entries, type User, type InsertUser, type Entry, type InsertEntry } from "@shared/schema";
-import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { type User, type InsertUser, type Entry, type InsertEntry } from "@shared/schema";
+import { connectMongoDB, User as UserModel, Entry as EntryModel } from "./mongodb";
 
 export interface IStorage {
-  getUser(id: number): Promise<User | undefined>;
+  getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
   getAllEntries(): Promise<Entry[]>;
   createEntry(entry: InsertEntry): Promise<Entry>;
-  deleteEntry(id: number): Promise<boolean>;
+  deleteEntry(id: string): Promise<boolean>;
 }
 
-export class DatabaseStorage implements IStorage {
-  async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
+export class MongoStorage implements IStorage {
+  constructor() {
+    connectMongoDB();
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    await connectMongoDB();
+    const user = await UserModel.findById(id);
+    if (!user) return undefined;
+    
+    return {
+      _id: user._id.toString(),
+      username: user.username,
+      password: user.password,
+    };
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user || undefined;
+    await connectMongoDB();
+    const user = await UserModel.findOne({ username });
+    if (!user) return undefined;
+    
+    return {
+      _id: user._id.toString(),
+      username: user.username,
+      password: user.password,
+    };
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(insertUser)
-      .returning();
-    return user;
+    await connectMongoDB();
+    const user = await UserModel.create(insertUser);
+    
+    return {
+      _id: user._id.toString(),
+      username: user.username,
+      password: user.password,
+    };
   }
 
   async getAllEntries(): Promise<Entry[]> {
-    const result = await db
-      .select()
-      .from(entries)
-      .orderBy(desc(entries.createdAt));
-    return result;
+    await connectMongoDB();
+    const entries = await EntryModel.find({}).sort({ createdAt: -1 });
+    
+    return entries.map(entry => ({
+      _id: entry._id.toString(),
+      text: entry.text,
+      mood: entry.mood,
+      createdAt: entry.createdAt,
+    }));
   }
 
   async createEntry(insertEntry: InsertEntry): Promise<Entry> {
-    const [entry] = await db
-      .insert(entries)
-      .values(insertEntry)
-      .returning();
-    return entry;
+    await connectMongoDB();
+    const entry = await EntryModel.create(insertEntry);
+    
+    return {
+      _id: entry._id.toString(),
+      text: entry.text,
+      mood: entry.mood,
+      createdAt: entry.createdAt,
+    };
   }
 
-  async deleteEntry(id: number): Promise<boolean> {
-    const result = await db
-      .delete(entries)
-      .where(eq(entries.id, id));
-    return result.rowCount > 0;
+  async deleteEntry(id: string): Promise<boolean> {
+    await connectMongoDB();
+    const result = await EntryModel.findByIdAndDelete(id);
+    return result !== null;
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MongoStorage();

@@ -15,7 +15,7 @@ export default function EntriesTimeline() {
   });
 
   const deleteEntryMutation = useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/entries/${id}`);
     },
     onSuccess: () => {
@@ -34,7 +34,7 @@ export default function EntriesTimeline() {
     },
   });
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to delete this entry?")) {
       deleteEntryMutation.mutate(id);
     }
@@ -97,7 +97,7 @@ export default function EntriesTimeline() {
       <div className="space-y-6">
         {entries.map((entry) => (
           <div
-            key={entry.id}
+            key={entry._id}
             className="glass-effect rounded-2xl p-6 shadow-lg transition-all duration-300 hover:shadow-xl"
           >
             <div className="flex items-start justify-between mb-4">
@@ -119,7 +119,7 @@ export default function EntriesTimeline() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleDelete(entry.id)}
+                onClick={() => handleDelete(entry._id)}
                 className="text-gray-400 hover:text-red-400 transition-colors"
               >
                 <Trash2 size={16} />

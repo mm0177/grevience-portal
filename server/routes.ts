@@ -38,8 +38,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete entry
   app.delete("/api/entries/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
+      const id = req.params.id;
+      if (!id) {
         return res.status(400).json({ message: "Invalid entry ID" });
       }
 

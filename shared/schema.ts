@@ -1,31 +1,28 @@
-import { pgTable, text, serial, timestamp } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+// Zod schemas for validation
+export const insertUserSchema = z.object({
+  username: z.string(),
+  password: z.string(),
 });
 
-export const entries = pgTable("entries", {
-  id: serial("id").primaryKey(),
-  text: text("text").notNull(),
-  mood: text("mood").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+export const insertEntrySchema = z.object({
+  text: z.string(),
+  mood: z.string(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-});
-
-export const insertEntrySchema = createInsertSchema(entries).pick({
-  text: true,
-  mood: true,
-});
-
+// Types for MongoDB documents
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type User = {
+  _id: string;
+  username: string;
+  password: string;
+};
+
 export type InsertEntry = z.infer<typeof insertEntrySchema>;
-export type Entry = typeof entries.$inferSelect;
+export type Entry = {
+  _id: string;
+  text: string;
+  mood: string;
+  createdAt: Date;
+};
